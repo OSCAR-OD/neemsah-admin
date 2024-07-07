@@ -1,0 +1,243 @@
+import {
+  Alert,
+  AlertTitle,
+  Box,
+  Button,
+  FormControl,
+  FormHelperText,
+  Grid,
+  IconButton,
+  TextField,
+  Typography,
+} from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { FaTimes } from "react-icons/fa";
+import { useDropzone } from "react-dropzone";
+import { red } from "@mui/material/colors";
+import * as Yup from "yup";
+import { Controller, useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import SubmitButton from "../../Form/SubmitButton";
+
+const thumbsContainer = {
+  display: "flex",
+  flexDirection: "row",
+  flexWrap: "wrap",
+  marginTop: 16,
+};
+
+const thumb = {
+  display: "inline-flex",
+  borderRadius: 2,
+  border: "1px solid #eaeaea",
+  marginBottom: 8,
+  marginRight: 8,
+  width: 100,
+  height: 100,
+  padding: 4,
+  boxSizing: "border-box",
+};
+
+const thumbInner = {
+  position: "relative",
+  display: "flex",
+  minWidth: 0,
+  overflow: "hidden",
+};
+
+const img = {
+  display: "block",
+  width: "auto",
+  height: "100%",
+};
+
+//Validation Form
+const validationSchema = Yup.object().shape({
+  name: Yup.string().required("Name is required"),
+  description: Yup.string().required("Description is required"),
+});
+
+function UploadIndustryPageData({ handleCancel, handleUploadSubmit }) {
+  const [files, setFiles] = useState([]);
+  const { getRootProps, getInputProps, fileRejections } = useDropzone({
+    accept: {
+      "image/*": [],
+      "video/*": [],
+    },
+    onDrop: (acceptedFiles) => {
+      if (acceptedFiles.length === 0) {
+        return;
+      }
+      const newFiles = acceptedFiles.map((file) => ({
+        file,
+        preview: URL.createObjectURL(file),
+      }));
+      setFiles((prevFiles) => [...prevFiles, ...newFiles]);
+    },
+    maxFiles: 20,
+  });
+
+  //react-hook-form
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm({
+    resolver: yupResolver(validationSchema),
+    mode: "onChange",
+  });
+
+  //Cancel file
+  const handleCancelFile = (cancelFile) => {
+    setFiles(files?.filter((item) => item?.file?.name !== cancelFile?.file?.name));
+  };
+
+  //submit media
+  const onSubmit = (data) => {
+    handleUploadSubmit(data, files);
+  };
+
+  //File Preview
+  const thumbs = files?.map((file) => {
+    return (
+      <div style={thumb} key={file?.file.name}>
+        <div style={thumbInner}>
+          {file?.file?.type?.includes("video") ? (
+            <video src={file.preview} controls={false}></video>
+          ) : (
+            <img
+              src={file?.preview}
+              style={img}
+              onLoad={() => {
+                URL.revokeObjectURL(file.preview);
+              }}
+            />
+          )}
+          <IconButton
+            sx={{
+              position: "absolute",
+              right: "2px",
+              top: "2px",
+              background: "white",
+            }}
+            onClick={() => handleCancelFile(file)}
+          >
+            <FaTimes size={16} color="black" />
+          </IconButton>
+        </div>
+      </div>
+    );
+  });
+
+  //File Rejection
+  const fileRejectionItems = fileRejections.map(({ file, errors }) => (
+    <Box key={file.path}>
+      <Alert severity="warning" sx={{ mt: 1 }}>
+        <AlertTitle>
+          File: {file.path} - {file.size} bytes
+        </AlertTitle>
+      </Alert>
+      <Box>
+        {errors.map((e) => (
+          <Alert severity="info" key={e.code} sx={{ mt: 1, ml: 2 }}>
+            <AlertTitle>
+              {e.message} maximum {1} upload{" "}
+            </AlertTitle>
+          </Alert>
+        ))}
+      </Box>
+    </Box>
+  ));
+
+  useEffect(() => {
+    return () => files.forEach((file) => URL.revokeObjectURL(file.preview));
+  }, [files]);
+
+  return (
+    <Box component={"form"} onSubmit={handleSubmit(onSubmit)}>
+      <Box
+        {...getRootProps({ className: "dropzone" })}
+        sx={{
+          height: 50,
+          width: 140,
+          display: "flexRight",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: "10px",
+        }}
+      >
+        <input {...getInputProps()} />
+        <Button variant="outlined">Upload Image</Button>
+      </Box>
+      <aside style={thumbsContainer}>
+        {thumbs}
+        <div>{fileRejectionItems}</div>
+      </aside>
+      <Grid container spacing={2} sx={{ mt: 3 }}>
+        <Grid item sm={6} xs={12}>
+          <Controller
+            render={({ field, formState }) => (
+              <FormControl fullWidth variant="outlined">
+                <Typography
+                  variant="formLabel"
+                  color={!!formState.errors?.name ? red[700] : ""}
+                >
+                Hero Title
+                </Typography>
+                <TextField
+                  {...field}
+                  error={!!formState.errors?.heroTitle}
+                  placeholder="Hero Title"
+                />
+                {!!formState.errors?.heroTitle ? (
+                  <FormHelperText error>
+                    {errors?.heroTitle?.message}
+                  </FormHelperText>
+                ) : (
+                  ""
+                )}
+              </FormControl>
+            )}
+            name="heroTitle"
+            control={control}
+            defaultValue=""
+          />
+        </Grid>
+        <Grid item sm={6} xs={12}>
+          <Controller
+            render={({ field, formState }) => (
+              <FormControl fullWidth variant="outlined">
+                <Typography
+                  variant="formLabel"
+                  color={!!formState.errors?.heroDescription ? red[700] : ""}
+                >
+                Hero Description
+                </Typography>
+                <TextField
+                  {...field}
+                  error={!!formState.errors?.heroDescription}
+                  placeholder="Hero Description"
+                />
+                {!!formState.errors?.heroDescription ? (
+                  <FormHelperText error>
+                    {errors?.heroDescription?.message}
+                  </FormHelperText>
+                ) : (
+                  ""
+                )}
+              </FormControl>
+            )}
+            name="heroDescription"
+            control={control}
+            defaultValue=""
+          />
+        </Grid>
+      </Grid>
+      <SubmitButton submitBtnText={"Upload"} onCancelClick={handleCancel} />
+    </Box>
+  );
+}
+
+export default UploadIndustryPageData;

@@ -1,0 +1,72 @@
+*,
+::after,
+::before {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+body,
+html {
+  font-family: "Inter", sans-serif;
+  overflow-x: hidden;
+}
+
+/* Placeholder text */
+::placeholder {
+  font-weight: 400 !important;
+  font-size: 14px !important;
+  letter-spacing: -0.01em;
+  color: #80899a !important;
+}
+.select__placeholder {
+  font-weight: 400 !important;
+  font-size: 13px !important;
+  letter-spacing: -0.01em;
+  color: #b7b7b7 !important;
+}
+
+/* Date Style */
+.MuiButtonBase-root-MuiPickersDay-root:not(.Mui-selected) {
+  border: 2px solid #1dbaff;
+  border-radius: 8px;
+}
+
+/* Hide Column Last Menu */
+.MuiDataGrid-menu
+  .MuiPaper-root
+  .MuiList-root.MuiList-padding.MuiDataGrid-menuList
+  .MuiButtonBase-root.MuiMenuItem-root.MuiMenuItem-gutters.MuiMenuItem-root.MuiMenuItem-gutters:nth-last-child(
+    1
+  ),
+.MuiDataGrid-menu
+  .MuiPaper-root
+  .MuiList-root.MuiList-padding.MuiDataGrid-menuList
+  .MuiButtonBase-root.MuiMenuItem-root.MuiMenuItem-gutters.MuiMenuItem-root.MuiMenuItem-gutters:nth-last-child(
+    2
+  ) {
+  display: none;
+}
+.MuiDataGrid-menu
+  .MuiPaper-root
+  .MuiDivider-root.MuiDivider-fullWidth:nth-last-of-type(1) {
+  display: none;
+}
+
+/* Manage Column Hide disabled */
+.MuiDataGrid-panel
+  .MuiPaper-root
+  .MuiDataGrid-panelWrapper
+  .MuiDataGrid-panelContent
+  .MuiDataGrid-columnsPanelRow
+  .MuiFormControlLabel-root.Mui-disabled {
+  display: none;
+}
+
+/* Jodit Text Editor  */
+.jodit-react-container ul,
+.jodit-react-container ol {
+  padding-left: 20px;
+}
+.jodit-status-bar .jodit-status-bar__item:last-child {
+  display: none;
+}

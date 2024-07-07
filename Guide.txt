@@ -1,0 +1,8 @@
+01. if sometime form value not submit that moment check the yup object maybe one or more extra object has added and remove extra object from the yup object
+or check if some form maybe hide depend on condition
+
+02.i want to try to make reusable component so if you change or update any component make sure search that component and check everything is fine or not
+
+03.you can pass props that you need
+
+04._redirects file and netlify.toml -- for fix to netlify page reload issue

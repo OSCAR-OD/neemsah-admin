@@ -1,0 +1,364 @@
+import {
+  Alert,
+  AlertTitle,
+  Box,
+  Button,
+  FormControl,
+  FormHelperText,
+  Grid,
+  IconButton,
+  TextField,
+  Typography,
+} from "@mui/material";
+import React, { useEffect, useState } from "react";
+import SubmitButton from "../../../Components/Form/SubmitButton";
+import { FaTimes } from "react-icons/fa";
+import { useDropzone } from "react-dropzone";
+import { red } from "@mui/material/colors";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
+import moment from "moment";
+import * as Yup from "yup";
+import { Controller, useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup/dist/yup";
+import { AiOutlinePlayCircle } from "react-icons/ai";
+
+const thumbsContainer = {
+  display: "flex",
+  flexDirection: "row",
+  flexWrap: "wrap",
+  marginTop: 16,
+};
+
+const thumb = {
+  display: "inline-flex",
+  borderRadius: 2,
+  border: "1px solid #eaeaea",
+  marginBottom: 8,
+  marginRight: 8,
+  width: 100,
+  height: 100,
+  padding: 4,
+  boxSizing: "border-box",
+};
+
+const thumbInner = {
+  position: "relative",
+  display: "flex",
+  minWidth: 0,
+  overflow: "hidden",
+};
+
+const img = {
+  display: "block",
+  width: "auto",
+  height: "100%",
+};
+
+//Validation Form
+const validationSchema = Yup.object().shape({
+  // mainTitle: Yup.string(),
+  // description: Yup.string(),
+});
+
+function UploadMedia({ handleCancel, handleUploadSubmit }) {
+  const [files, setFiles] = useState([]);
+  //console.log("UploadMedia - files:", files);
+  const { getRootProps, getInputProps, fileRejections } = useDropzone({
+    accept: {
+      "image/*": [],
+      "video/*": [],
+    },
+    onDrop: (acceptedFiles) => {
+      // setFiles(
+      //   acceptedFiles.map((file) =>
+      //     Object.assign(file, {
+      //       preview: URL.createObjectURL(file),
+      //     })
+      //   )
+      // );
+      if (acceptedFiles.length === 0) {
+        return;
+      }
+      const newFiles = acceptedFiles.map((file) => {
+        return {
+          file,
+          preview: URL.createObjectURL(file),
+        };
+      });
+      setFiles([...files.concat(newFiles)]);
+    },
+    maxFiles: 1,
+  });
+
+  //react-hook-form
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm({
+    resolver: yupResolver(validationSchema),
+    mode: "onChange",
+  });
+
+  //Cancel file
+  const handleCancelFile = (cancelFile) => {
+    //console.log("handleCancelFile - cancelFile:", cancelFile);
+    setFiles(
+      files?.filter((item) => item?.file?.name !== cancelFile?.file?.name)
+    );
+  };
+
+  //submit media
+  const onSubmit = (data) => {
+    handleUploadSubmit(data, files);
+  };
+
+  //File Preview
+  const thumbs = files?.map((file) => {
+    return (
+      <div style={thumb} key={file?.file.name}>
+        <div style={thumbInner}>
+          {file?.file?.type?.includes("video") ? (
+            <video src={file.preview} controls={false}></video>
+          ) : (
+            <img
+              src={file?.preview}
+              style={img}
+              // Revoke data uri after image is loaded
+              onLoad={() => {
+                URL.revokeObjectURL(file.preview);
+              }}
+            />
+          )}
+
+          <IconButton
+            sx={{
+              position: "absolute",
+              right: "2px",
+              top: "2px",
+              background: "white",
+            }}
+            onClick={() => handleCancelFile(file)}
+          >
+            <FaTimes size={16} color="black" />
+          </IconButton>
+        </div>
+      </div>
+    );
+  });
+
+  //File Rejection
+  const fileRejectionItems = fileRejections.map(({ file, errors }) => (
+    <Box key={file.path}>
+      <Alert severity="warning" sx={{ mt: 1 }}>
+        <AlertTitle>
+          File: {file.path} - {file.size} bytes
+        </AlertTitle>
+      </Alert>
+      <Box>
+        {errors.map((e) => (
+          <Alert severity="info" key={e.code} sx={{ mt: 1, ml: 2 }}>
+            <AlertTitle>
+              {e.message} maximum {1} upload{" "}
+            </AlertTitle>
+          </Alert>
+        ))}
+      </Box>
+    </Box>
+  ));
+
+  useEffect(() => {
+    // Make sure to revoke the data uris to avoid memory leaks, will run on unmount
+    return () => files.forEach((file) => URL.revokeObjectURL(file.preview));
+  }, []);
+
+  return (
+    <Box component={"form"} onSubmit={handleSubmit(onSubmit)}>
+      <Box
+        {...getRootProps({ className: "dropzone" })}
+        sx={{
+          height: 300,
+          border: "2px dotted #4FB5E5",
+          borderRadius: "5px",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: "10px",
+        }}
+      >
+        <input {...getInputProps()} />
+        <p>Drag n drop some files here, or click to select files</p>
+        <em style={{ fontSize: "14px" }}>
+          (Only upload images and videos files upload){" "}
+        </em>
+        <Button variant="outlined">Select File</Button>
+      </Box>
+      <aside style={thumbsContainer}>
+        {thumbs}
+        <div>{fileRejectionItems}</div>
+      </aside>
+      <Grid container spacing={2} sx={{ mt: 3 }}>
+        <Grid item sm={6} xs={12}>
+          <Controller render={({ field, formState }) => (
+            <FormControl fullWidth variant="outlined">
+              <Typography
+                variant="formLabel"
+                color={!!formState.errors?.title ? red[700] : ""}
+              >
+                Exhibition Card Title
+              </Typography>
+              <TextField
+                {...field}
+                error={!!formState.errors?.title}
+                placeholder="Exhibition Card Title"
+              />
+              {!!formState.errors?.title ? (
+                <FormHelperText error>
+                  {errors?.title?.message}
+                </FormHelperText>
+              ) : (
+                ""
+              )}
+            </FormControl>
+          )}
+            name="title"
+            control={control}
+            defaultValue=""
+          />
+        </Grid>
+        <Grid item sm={6} xs={12}>
+          <Controller render={({ field, formState }) => (
+            <FormControl fullWidth variant="outlined">
+              <Typography
+                variant="formLabel"
+                color={!!formState.errors?.division ? red[700] : ""}
+              >
+                Exhibition Card Division
+              </Typography>
+              <TextField
+                {...field}
+                error={!!formState.errors?.division}
+                placeholder="Exhibition Card Division"
+              />
+              {!!formState.errors?.division ? (
+                <FormHelperText error>
+                  {errors?.division?.message}
+                </FormHelperText>
+              ) : (
+                ""
+              )}
+            </FormControl>
+          )}
+            name="division"
+            control={control}
+            defaultValue=""
+          />
+        </Grid>
+        <Grid item sm={6} xs={12}>
+          <LocalizationProvider dateAdapter={AdapterMoment}>
+            <Controller
+              render={({ field, formState }) => (
+                <FormControl fullWidth variant="outlined">
+                  <Typography
+                    variant="formLabel"
+                    color={!!formState.errors?.date ? red[700] : ""}
+                  >
+                    Exhibition Card Date
+                  </Typography>
+                  <DatePicker
+                    error={!!formState.errors?.date}
+                    fullWidth
+                    {...field}
+                    value={field?.value ? moment.utc(field?.value) : null}
+                    onChange={(date) => field.onChange(moment(date).format("D MMM YYYY"))}
+                    slotProps={{
+                      textField: {
+                        error: errors?.date ? true : false,
+                      },
+                    }}
+                  />
+                  {!!formState.errors?.date ? (
+                    <FormHelperText error>
+                      {errors?.date?.message}
+                    </FormHelperText>
+                  ) : (
+                    ""
+                  )}
+                </FormControl>
+              )}
+              name="date"
+              control={control}
+              defaultValue=""
+            />
+          </LocalizationProvider>
+        </Grid>
+        <Grid item sm={6} xs={12}>
+          <Controller render={({ field, formState }) => (
+            <FormControl fullWidth variant="outlined">
+              <Typography
+                variant="formLabel"
+                color={!!formState.errors?.headline ? red[700] : ""}
+              >
+                Exhibition Card Headline
+              </Typography>
+              <TextField
+                {...field}
+                error={!!formState.errors?.headline}
+                placeholder="Exhibition Card Headline"
+              />
+              {!!formState.errors?.headline ? (
+                <FormHelperText error>
+                  {errors?.headline?.message}
+                </FormHelperText>
+              ) : (
+                ""
+              )}
+            </FormControl>
+          )}
+            name="headline"
+            control={control}
+            defaultValue=""
+          />
+        </Grid>
+        <Grid item sm={6} xs={12}>
+          <Controller render={({ field, formState }) => (
+            <FormControl fullWidth variant="outlined">
+              <Typography
+                variant="formLabel"
+                color={!!formState.errors?.description ? red[700] : ""}
+              >
+                Exhibition Card Description
+              </Typography>
+              <TextField
+                {...field}
+                error={!!formState.errors?.description}
+                placeholder="Exhibition Card Description"
+                multiline
+                minRows={4}
+                maxRows={12}
+              />
+              {!!formState.errors?.description ? (
+                <FormHelperText error>
+                  {errors?.description?.message}
+                </FormHelperText>
+              ) : (
+                ""
+              )}
+            </FormControl>
+          )}
+            name="description"
+            control={control}
+            defaultValue=""
+          />
+        </Grid>
+      </Grid>
+      <SubmitButton submitBtnText={"Upload"} onCancelClick={handleCancel} />
+    </Box>
+  );
+}
+
+export default UploadMedia;

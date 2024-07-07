@@ -1,0 +1,72 @@
+01.file upload delete icon functionality add
+02.hide payload and token form localStorage using encrypt and decrypt
+03.axiosinstance login code fix
+04.increase media file single modal performance
+05.add file upload functionality
+06.media change api code and fix error modal design issue
+07.make home>banner and wedding pages convert into banner component
+08.change design comming soon page
+
+
+
+import axios from 'axios';
+//export const baseUrl = 'https://api.neemsah.com/api/v1';
+export const baseUrl = 'http://localhost:4000/api/v1';
+
+const axiosInstance = axios.create({
+  baseURL: baseUrl // API base URL
+});
+
+// Request interceptor
+axiosInstance.interceptors.request.use(
+  async (config) => {
+    const accessToken = localStorage.getItem('accessToken');
+    if (accessToken) {
+      config.headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+    // config.headers['Content-Type'] = 'application/json';
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+let refresh = true;
+// Response interceptor
+axiosInstance.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response && error.response.status === 401 && !refresh) {
+      refresh = true;
+
+      // Obtain new access token using refresh token
+      const refreshToken = localStorage.getItem('refreshToken');
+      try {
+        const newAccessToken = await axiosInstance.post('/auth/refresh-token', {
+          token: refreshToken,
+        });
+        if (newAccessToken) {
+          localStorage.setItem('accessToken', newAccessToken?.data?.data?.token);
+
+          // Retry the original request with the new access token
+          originalRequest.headers['Authorization'] = `Bearer ${newAccessToken?.data?.data?.token}`;
+          return axiosInstance(originalRequest);
+        }
+      } catch (error) {
+    
+        // Handle the error scenario
+        localStorage.clear()
+        console.error('Error refreshing access token:', error);
+        window.location.href='/'
+      }
+    }
+    refresh = false;
+    return Promise.reject(error);
+  }
+);
+
+export default axiosInstance;
